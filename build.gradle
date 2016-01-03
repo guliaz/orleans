@@ -31,14 +31,14 @@ dependencies {
             'org.webjars:angularjs:1.4.8'
     )
     compile('org.thymeleaf:thymeleaf-spring4')
-    compile('org.springframework.boot:spring-boot-starter-security') {
+    /*compile('org.springframework.boot:spring-boot-starter-security') {
         exclude group: "org.slf4j", module: "log4j-over-slf4j"
         exclude group: "ch.qos.logback", module: "logback-classic"
-    }
-    compile('org.springframework.boot:spring-boot-starter-data-jpa') {
+    }*/
+    /*compile('org.springframework.boot:spring-boot-starter-data-jpa') {
         exclude group: "org.slf4j", module: "log4j-over-slf4j"
         exclude group: "ch.qos.logback", module: "logback-classic"
-    }
+    }*/
     compile('org.springframework.boot:spring-boot-starter-web') {
         exclude group: "org.slf4j", module: "log4j-over-slf4j"
         exclude group: "ch.qos.logback", module: "logback-classic"
