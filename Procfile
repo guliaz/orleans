@@ -1,1 +1,1 @@
-web: java -Dserver.port=$PORT -jar build/libs/orleans-1.0.0.jar
+web: java -Dserver.port=$PORT $JAVA_OPTS -jar build/libs/orleans-1.0.0.jar
