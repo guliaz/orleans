@@ -24,17 +24,16 @@ repositories {
 
 dependencies {
     compile(
-            'org.codehaus.groovy:groovy-all:2.3.11',
             'mysql:mysql-connector-java:5.1.35',
             'org.webjars:bootstrap:3.3.6',
             'org.webjars:jquery:2.1.4',
             'org.webjars:angularjs:1.4.8'
     )
     compile('org.thymeleaf:thymeleaf-spring4')
-    /*compile('org.springframework.boot:spring-boot-starter-security') {
+    compile('org.springframework.boot:spring-boot-starter-security') {
         exclude group: "org.slf4j", module: "log4j-over-slf4j"
         exclude group: "ch.qos.logback", module: "logback-classic"
-    }*/
+    }
     /*compile('org.springframework.boot:spring-boot-starter-data-jpa') {
         exclude group: "org.slf4j", module: "log4j-over-slf4j"
         exclude group: "ch.qos.logback", module: "logback-classic"
