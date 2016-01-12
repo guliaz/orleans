@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: orleans
+security:
+  basic:
+    enabled: false

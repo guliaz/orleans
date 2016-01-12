@@ -1,3 +1,4 @@
+/*
 package com.barley.heroku.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +19,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/css/**").permitAll()
-                .antMatchers("/webjars/**").permitAll()
+                .antMatchers("/css*/
+/**").permitAll()
+                .antMatchers("/webjars*/
+/**").permitAll()
                 //.antMatchers("/", "/index").permitAll()
                 .anyRequest().authenticated()
                 .and()
@@ -36,4 +39,4 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         auth.inMemoryAuthentication()
                 .withUser("user").password("pass").roles("USER");
     }
-}
+}*/
