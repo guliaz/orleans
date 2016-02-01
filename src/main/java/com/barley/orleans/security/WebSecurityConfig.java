@@ -1,4 +1,4 @@
-package com.barley.heroku.security;
+package com.barley.orleans.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -20,11 +20,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/css/**").permitAll()
                 .antMatchers("/webjars/**").permitAll()
-                //.antMatchers("/", "/index").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .formLogin()
-                //.loginPage("/login")
+                .loginPage("/login")
                 .permitAll()
                 .and()
                 .logout()

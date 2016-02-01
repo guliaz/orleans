@@ -1,0 +1,9 @@
+server:
+  port: 9000
+spring:
+  application:
+    name: orleans
+multipart:
+  enabled: true
+  maxFileSize: 10Mb
+  maxRequestSize: 10Mb
