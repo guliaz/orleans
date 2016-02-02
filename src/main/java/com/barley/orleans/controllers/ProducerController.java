@@ -4,34 +4,55 @@ import com.barley.orleans.broker.Producer;
 import com.barley.orleans.properties.ProducerProperties;
 import com.barley.orleans.structure.Payload;
 import com.barley.orleans.structure.Response;
-import org.apache.kafka.clients.producer.RecordMetadata;
+import com.barley.orleans.structure.ResponseList;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.concurrent.Future;
+import java.util.List;
+import java.util.stream.Collectors;
 
+@RestController
 @RequestMapping("v1/produce")
 public class ProducerController {
 
     @Autowired
     private ProducerProperties producerProperties;
 
-    private Producer producer;
+    private Producer producer = Producer.producer(null, true);
 
-    public ProducerController() {
-        producer = Producer.producer(producerProperties.properties());
+    @RequestMapping(value = "/{topic}", method = {RequestMethod.POST}, produces = {MediaType.APPLICATION_JSON_VALUE}, consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<ResponseList> produce(@PathVariable(value = "topic") String topic, @RequestBody List<Payload> payloads) {
+        final ResponseList responseList = new ResponseList();
+        responseList.setResponses(payloads.parallelStream().map(payload -> {
+            final Response response = producer.produce(topic, payload);
+            if (response.getErrors().size() > 0)
+                responseList.setStatus(HttpStatus.BAD_REQUEST.value());
+            return response;
+        }).collect(Collectors.toList()));
+
+        return new ResponseEntity<>(responseList, HttpStatus.valueOf(responseList.getStatus()));
     }
 
-    @RequestMapping("/{topic}")
-    public Response produce(@PathVariable(value = "topic") String topic, Payload payload) {
+
+    @RequestMapping(value = "/{metrics}", method = {RequestMethod.GET}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<String> metrics() {
+        String metrics = "{}";
+        HttpStatus httpStatus = HttpStatus.OK;
         try {
-            Future<RecordMetadata> future = producer.produce(topic, payload);
+            metrics = producer.metrics();
         } catch (IOException ioe) {
-            ioe.printStackTrace();
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         }
-        return new Response();
+        return new ResponseEntity<>(metrics, httpStatus);
+    }
+
+    private void initProducer() {
+        if (producerProperties != null)
+            producer = Producer.producer(producerProperties.properties());
     }
 
 }

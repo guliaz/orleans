@@ -5,6 +5,9 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.Properties;
 
+/**
+ * Configuration class to serve properties for producer.
+ */
 @RefreshScope
 @Configuration
 public class ProducerProperties {

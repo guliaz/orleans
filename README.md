@@ -1,4 +1,6 @@
 ## ORLEANS
 
 ### What is it?
-Spring boot app for [Heroku](www.heroku.com).
+Custom implementation of a rest application to support produce and consume from Apache kafka broker.
+
+More details coming soon.

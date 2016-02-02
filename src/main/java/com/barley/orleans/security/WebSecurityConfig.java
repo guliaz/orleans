@@ -8,6 +8,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
+/**
+ * Implementation of Spring web security to secure all rest end-points and GUI.
+ * <p>
+ * Currently using dummy user name password. It can be configured to use ldap or other form of authentication.
+ */
 @Configuration
 @EnableWebSecurity
 @CrossOrigin

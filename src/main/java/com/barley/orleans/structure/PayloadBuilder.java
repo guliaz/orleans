@@ -1,5 +1,8 @@
 package com.barley.orleans.structure;
 
+/**
+ * Builder implementation for Payload class.
+ */
 public class PayloadBuilder {
     private String client;
     private String ipAddress;

@@ -24,7 +24,10 @@ repositories {
 
 dependencies {
     compile('org.apache.kafka:kafka_2.10:0.9.0.0')
-    compile('org.springframework.cloud:spring-cloud-config-client:1.0.3.RELEASE')
+    compile('org.springframework.cloud:spring-cloud-config-client:1.0.3.RELEASE') {
+        exclude group: "org.slf4j", module: "log4j-over-slf4j"
+        exclude group: "ch.qos.logback", module: "logback-classic"
+    }
     compile(
             'mysql:mysql-connector-java:5.1.35',
             'org.webjars:bootstrap:3.3.6',

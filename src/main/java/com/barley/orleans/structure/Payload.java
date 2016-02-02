@@ -1,5 +1,8 @@
 package com.barley.orleans.structure;
 
+/**
+ * Payload class wrapper for collect info about data being produced.
+ */
 public class Payload {
     private String client;
     private String ipAddress;
@@ -57,5 +60,16 @@ public class Payload {
 
     public void setData(Object data) {
         this.data = data;
+    }
+
+    @Override
+    public String toString() {
+        return "Payload{" +
+                "client='" + client + '\'' +
+                ", ipAddress='" + ipAddress + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", correlationId='" + correlationId + '\'' +
+                ", schemaId='" + schemaId + '\'' +
+                '}';
     }
 }
