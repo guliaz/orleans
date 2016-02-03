@@ -20,14 +20,12 @@ public class ProducerTest {
     @BeforeClass
     public static void setUp() {
         producer = Producer.producer(null, true);
-        payloadBuilder = PayloadBuilder.aPayload().withClient("TEST").withIpAddress("").withSchemaId("").withUuid(UUID.randomUUID().toString());
+        payloadBuilder = PayloadBuilder.aPayload().withClient("TEST").withIpAddress("10.0.0.1").withSchemaId("").withUuid(UUID.randomUUID().toString());
     }
 
     @Test
     public void testDummyPayload() throws Exception {
         Response response = producer.produce("topic", payloadBuilder.withData("mydata").build());
-        System.out.println(producer.metrics());
-        System.out.println(producer.partitionInfo("topic"));
         assertTrue(response.getOffset() != null && response.getOffset() >= 0);
     }
 
