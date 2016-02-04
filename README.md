@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/vikramgulia/orleans.svg?branch=master)](https://travis-ci.org/vikramgulia/orleans)
+
 ## ORLEANS
 
 ### What is it?

@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: orleans
+
+# Security enable/disable
+security:
+  basic:
+    enabled: false

@@ -9,6 +9,7 @@ import org.springframework.boot.test.IntegrationTest;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.boot.test.TestRestTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.web.client.RestTemplate;
@@ -24,6 +25,7 @@ import static org.junit.Assert.assertThat;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = Application.class)
 @WebAppConfiguration
+@ActiveProfiles(value = "test")
 @IntegrationTest({"server.port=0"})
 public class SampleControllerIntegrationTest {
 
@@ -42,6 +44,7 @@ public class SampleControllerIntegrationTest {
     @Test
     public void hello() throws Exception {
         ResponseEntity<String> response = template.getForEntity(base.toString(), String.class);
+        System.out.println(response.getBody());
         assertThat(response.getBody(), equalTo("Hello World!!"));
     }
 }
