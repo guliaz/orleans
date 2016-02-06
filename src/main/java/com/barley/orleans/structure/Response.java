@@ -45,4 +45,13 @@ public class Response {
     public void addError(String error) {
         this.errors.add(error);
     }
+
+    @Override
+    public String toString() {
+        return "Response{" +
+                "partition=" + partition +
+                ", offset=" + offset +
+                ", errors=" + errors +
+                '}';
+    }
 }
