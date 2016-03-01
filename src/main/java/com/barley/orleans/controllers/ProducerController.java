@@ -6,6 +6,10 @@ import com.barley.orleans.structure.Payload;
 import com.barley.orleans.structure.Response;
 import com.barley.orleans.structure.ResponseList;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ApplicationContextEvent;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.ContextStartedEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,14 +19,18 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Rest controller to expose method to produce list of Payloads to Kafka.
+ * It uses
+ */
 @RestController
 @RequestMapping("v1/produce")
-public class ProducerController {
+public class ProducerController implements ApplicationListener<ApplicationContextEvent> {
 
     @Autowired
     private ProducerProperties producerProperties;
 
-    private Producer producer = Producer.producer(null, true);
+    private static Producer producer;
 
     @RequestMapping(value = "/{topic}", method = {RequestMethod.POST}, produces = {MediaType.APPLICATION_JSON_VALUE}, consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<ResponseList> produce(@PathVariable(value = "topic") String topic, @RequestBody List<Payload> payloads) {
@@ -33,7 +41,6 @@ public class ProducerController {
                 responseList.setStatus(HttpStatus.BAD_REQUEST.value());
             return response;
         }).collect(Collectors.toList()));
-
         return new ResponseEntity<>(responseList, HttpStatus.valueOf(responseList.getStatus()));
     }
 
@@ -51,8 +58,14 @@ public class ProducerController {
     }
 
     private void initProducer() {
-        if (producerProperties != null)
+        if (!producer.isProducerAlive() && producerProperties != null)
             producer = Producer.producer(producerProperties.properties());
     }
 
+    @Override
+    public void onApplicationEvent(ApplicationContextEvent event) {
+        if ((event instanceof ContextStartedEvent || event instanceof ContextRefreshedEvent) && producer == null) {
+            initProducer();
+        }
+    }
 }

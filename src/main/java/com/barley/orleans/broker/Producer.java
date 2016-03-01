@@ -24,13 +24,15 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * Producer class to publish/produce payloads to Kafka broker.
+ * <p>
+ * This Producer class is a
+ * </p>
  */
 public final class Producer {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private static KafkaProducer<String, String> kafkaProducer = null;
-    private static MockProducer<String, String> mockProducer = null;
+    private static org.apache.kafka.clients.producer.Producer<String, String> kafkaProducer = null;
     private static Producer producer = null;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static boolean isProducerAlive = false;
@@ -48,7 +50,7 @@ public final class Producer {
         if (!isMock)
             kafkaProducer = new KafkaProducer<>(properties);
         else {
-            mockProducer = new MockProducer<>(true, new StringSerializer(), new StringSerializer());
+            kafkaProducer = new MockProducer<>(true, new StringSerializer(), new StringSerializer());
             isMockProducer = true;
         }
         isProducerAlive = true;
@@ -56,6 +58,7 @@ public final class Producer {
 
     /**
      * static access method to retrieve the alive Producer instance. This is the main method to access the Producer instance.
+     * If you already initiated a mock producer and want a new producer, simply close and create a new one.
      *
      * @param properties Properties needed for Producer
      * @return Producer already alive or newly created singleton instance of Producer
@@ -72,10 +75,48 @@ public final class Producer {
      * @return already alive or newly created singleton instance of Producer
      */
     public static Producer producer(Properties properties, boolean isMock) {
-        if (!isProducerAlive || producer == null || kafkaProducer == null) {
+        if (!isProducerAlive && producer == null && kafkaProducer == null) {
             producer = new Producer(properties, isMock);
         }
         return producer;
+    }
+
+    /**
+     * method to flush the messages in sender's queue.
+     */
+    public void flush() {
+        if (isProducerAlive) {
+            kafkaProducer.flush();
+        }
+    }
+
+    /**
+     * Closing the underlying producer. If closing, I think flushing before would be better.
+     */
+    public void close() {
+        if (isProducerAlive) {
+            kafkaProducer.close();
+            isMockProducer = false;
+            isProducerAlive = false;
+        }
+    }
+
+    /**
+     * Tells if this producer a mock one.
+     *
+     * @return boolean
+     */
+    public static boolean isMockProducer() {
+        return isMockProducer;
+    }
+
+    /**
+     * Tells if a kafka producer created yet or not.
+     *
+     * @return boolean
+     */
+    public static boolean isProducerAlive() {
+        return isProducerAlive;
     }
 
     /**
@@ -173,12 +214,10 @@ public final class Producer {
             if (topic == null || topic.length() == 0)
                 throw new InvalidPayloadException("Topic cannot be null or empty");
             validateInput(payload);
-            final Future<RecordMetadata> future;
-            if (isMockProducer)
-                future = send(mockProducer, topic, partition, key, payload, afterCall);
-
-            else
-                future = send(kafkaProducer, topic, partition, key, payload, afterCall);
+            final Future<RecordMetadata> future = kafkaProducer.send(new ProducerRecord<>(topic, partition, key, OBJECT_MAPPER.writeValueAsString(payload)), (metadata, exception) -> {
+                if (afterCall != null)
+                    afterCall.after(topic, metadata.partition(), metadata.offset(), exception, payload, producerProperties);
+            });
             RecordMetadata recordMetadata = future.get(100, TimeUnit.MILLISECONDS);
             response.setOffset(recordMetadata.offset());
             response.setPartition(recordMetadata.partition());
@@ -188,26 +227,6 @@ public final class Producer {
         }
         return response;
     }
-
-    /**
-     * private method to support producing. It uses MockProducer if enabled else to KafkaProducer.
-     *
-     * @param producerInterface The producer to be used.
-     * @param topic             the topic to which Payload need to be produced.
-     * @param partition         Partition to which Payload will be produced to.
-     * @param key               the key used for partitioning.
-     * @param payload           the payload to be produced.
-     * @param afterCall         AfterCall interface which user can implement to allow API to invoke after the call of a method is complete.
-     * @return Future with RecordMetadata
-     * @throws IOException
-     */
-    private Future<RecordMetadata> send(org.apache.kafka.clients.producer.Producer producerInterface, String topic, Integer partition, String key, Payload payload, AfterCall afterCall) throws IOException {
-        return producerInterface.send(new ProducerRecord<>(topic, partition, key, OBJECT_MAPPER.writeValueAsString(payload)), (metadata, exception) -> {
-            if (afterCall != null)
-                afterCall.after(topic, metadata.partition(), metadata.offset(), exception, payload, producerProperties);
-        });
-    }
-
 
     /**
      * Validate the Payload for expected elements.
@@ -242,9 +261,7 @@ public final class Producer {
         List<PartitionInfo> partitionInfoList = null;
         if (kafkaProducer != null && producer != null)
             partitionInfoList = kafkaProducer.partitionsFor(topic);
-        else if (mockProducer != null) {
-            partitionInfoList = mockProducer.partitionsFor(topic);
-        } else
+        else
             throwIOException("Kafka Producer is not initialized or is closed. Please initialize the producer before invoking this method");
         return partitionInfoList;
     }
@@ -259,9 +276,7 @@ public final class Producer {
         String metrics = null;
         if (kafkaProducer != null && producer != null)
             metrics = OBJECT_MAPPER.writeValueAsString(kafkaProducer.metrics());
-        else if (mockProducer != null) {
-            metrics = OBJECT_MAPPER.writeValueAsString(mockProducer.metrics());
-        } else
+        else
             throwIOException("Kafka Producer is not initialized or is closed. Please initialize the producer before invoking this method");
         return metrics;
     }
