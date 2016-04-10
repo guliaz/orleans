@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/vikramgulia/orleans.svg?branch=master)](https://travis-ci.org/vikramgulia/orleans)
+[![Build Status](https://travis-ci.org/guliaz/orleans.svg?branch=master)](https://travis-ci.org/guliaz/orleans)
 
 ## ORLEANS
 
