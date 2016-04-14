@@ -1,5 +1,7 @@
 package com.barley.orleans.broker;
 
+import com.barley.orleans.interfaces.AfterCall;
+import com.barley.orleans.structure.Payload;
 import com.barley.orleans.structure.PayloadBuilder;
 import com.barley.orleans.structure.Response;
 import org.junit.BeforeClass;
@@ -7,6 +9,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.UUID;
 
 import static org.junit.Assert.assertTrue;
@@ -22,7 +25,7 @@ public class ProducerTest {
 
     @BeforeClass
     public static void setUp() {
-        producer = Producer.producer(null, true);
+        producer = new Producer(null, true);
         payloadBuilder = PayloadBuilder.aPayload().withClient("TEST").withIpAddress("10.0.0.1").withSchemaId("").withUuid(UUID.randomUUID().toString());
     }
 
@@ -56,7 +59,12 @@ public class ProducerTest {
     @Test
     public void testProduceWithAfterCall() throws Exception {
         final List<Boolean> hasAfterCallHpnd = new ArrayList<>();
-        Response response = producer.produce("topic", payloadBuilder.withData("{\"event\": \"test-event\"}").build(), (topic, partition, offset1, exception, payload, properties) -> hasAfterCallHpnd.add(true));
+        Response response = producer.produce("topic", payloadBuilder.withData("{\"event\": \"test-event\"}").build(), new AfterCall() {
+            @Override
+            public void after(String topic, Integer partition, Long offset1, Exception exception, Payload payload, Properties properties) {
+                hasAfterCallHpnd.add(true);
+            }
+        });
         assertTrue(response.getOffset() != null && response.getOffset() >= offset);
         assertTrue(response.getPartition() != null && response.getPartition() >= 0);
         assertTrue(hasAfterCallHpnd.get(0));
@@ -74,7 +82,12 @@ public class ProducerTest {
     @Test
     public void testProduceWithKeyAfterCall() throws Exception {
         final List<Boolean> hasAfterCallHpnd = new ArrayList<>();
-        Response response = producer.produce("topic", "my-key", payloadBuilder.withData("{\"event\": \"test-event\"}").build(), (topic, partition, offset1, exception, payload, properties) -> hasAfterCallHpnd.add(true));
+        Response response = producer.produce("topic", "my-key", payloadBuilder.withData("{\"event\": \"test-event\"}").build(), new AfterCall() {
+            @Override
+            public void after(String topic, Integer partition, Long offset1, Exception exception, Payload payload, Properties properties) {
+                hasAfterCallHpnd.add(true);
+            }
+        });
         assertTrue(response.getOffset() != null && response.getOffset() >= offset);
         assertTrue(response.getPartition() != null && response.getPartition() >= 0);
         assertTrue(hasAfterCallHpnd.get(0));
@@ -92,7 +105,12 @@ public class ProducerTest {
     @Test
     public void testProduceWithPartitionAfterCall() throws Exception {
         final List<Boolean> hasAfterCallHpnd = new ArrayList<>();
-        Response response = producer.produce("topic", 0, payloadBuilder.withData("{\"event\": \"test-event\"}").build(), (topic, partition, offset1, exception, payload, properties) -> hasAfterCallHpnd.add(true));
+        Response response = producer.produce("topic", 0, payloadBuilder.withData("{\"event\": \"test-event\"}").build(), new AfterCall() {
+            @Override
+            public void after(String topic, Integer partition, Long offset1, Exception exception, Payload payload, Properties properties) {
+                hasAfterCallHpnd.add(true);
+            }
+        });
         assertTrue(response.getOffset() != null && response.getOffset() >= offset);
         assertTrue(response.getPartition() != null && response.getPartition() >= 0);
         assertTrue(hasAfterCallHpnd.get(0));

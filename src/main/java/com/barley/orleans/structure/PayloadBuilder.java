@@ -1,5 +1,7 @@
 package com.barley.orleans.structure;
 
+import java.util.UUID;
+
 /**
  * Builder implementation for Payload class.
  */
@@ -29,6 +31,11 @@ public class PayloadBuilder {
 
     public PayloadBuilder withUuid(String uuid) {
         this.uuid = uuid;
+        return this;
+    }
+
+    public PayloadBuilder withUuid() {
+        this.uuid = UUID.randomUUID().toString();
         return this;
     }
 

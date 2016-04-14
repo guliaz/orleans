@@ -1,6 +1,8 @@
 package com.barley.orleans.security;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -11,7 +13,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 /**
  * Implementation of Spring web security to secure all rest end-points and GUI.
- * <p>
+ * <p/>
  * Currently using dummy user name password. It can be configured to use ldap or other form of authentication.
  */
 @Configuration
@@ -20,6 +22,18 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 @Profile(value = {"development", "production"})
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
+    @Getter
+    @Value("${app.user}")
+    String user;
+
+    @Getter
+    @Value("${app.password}")
+    String password;
+
+    @Getter
+    @Value("${app.roles}")
+    String[] roles;
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
@@ -27,6 +41,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/css/**").permitAll()
                 .antMatchers("/webjars/**").permitAll()
+                //.antMatchers("/", "/index").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .formLogin()
@@ -40,6 +55,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         auth.inMemoryAuthentication()
-                .withUser("user").password("pass").roles("USER");
+                .withUser(getUser())
+                .password(getPassword())
+                .roles(getRoles());
     }
 }

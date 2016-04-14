@@ -2,15 +2,19 @@ group 'com.barley.orleans'
 version '1.0.0'
 
 apply plugin: 'java'
+apply plugin: 'scala'
 apply plugin: 'spring-boot'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
 
 buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven {
+            url 'https://artifactory.global.dish.com/artifactory/repo'
+        }
     }
     dependencies {
         classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.3.0.RELEASE'
@@ -20,6 +24,9 @@ buildscript {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        url 'https://artifactory.global.dish.com/artifactory/repo'
+    }
 }
 
 dependencies {
@@ -30,11 +37,20 @@ dependencies {
     }
     compile(
             'mysql:mysql-connector-java:5.1.35',
+            'javax.servlet:javax.servlet-api:3.1.0',
             'org.webjars:bootstrap:3.3.6',
             'org.webjars:jquery:2.1.4',
-            'org.webjars:angularjs:1.4.8'
+            'org.webjars:angularjs:1.4.8',
+            'org.projectlombok:lombok:1.16.6',
+            'org.scala-lang:scala-library:2.10.6'
     )
-    compile('org.thymeleaf:thymeleaf-spring4')
+    compile 'org.thymeleaf:thymeleaf-spring4'
+    compile 'com.typesafe.akka:akka-actor_2.10:2.3.14'
+    compile 'io.dropwizard.metrics:metrics-core:3.1.0'
+    compile 'javax.inject:javax.inject:1'
+    compile 'org.thymeleaf:thymeleaf-spring4'
+    compile 'org.webjars.bower:messenger:1.4.2'
+    //compile 'org.elasticsearch:elasticsearch:2.3'
     compile('org.springframework.boot:spring-boot-starter-security') {
         exclude group: "org.slf4j", module: "log4j-over-slf4j"
         exclude group: "ch.qos.logback", module: "logback-classic"

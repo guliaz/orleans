@@ -5,10 +5,7 @@ import com.barley.orleans.interfaces.AfterCall;
 import com.barley.orleans.structure.Payload;
 import com.barley.orleans.structure.Response;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.MockProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
@@ -32,12 +29,11 @@ public final class Producer {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private static org.apache.kafka.clients.producer.Producer<String, String> kafkaProducer = null;
-    private static Producer producer = null;
+    private org.apache.kafka.clients.producer.Producer<String, String> kafkaProducer;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static boolean isProducerAlive = false;
-    private static boolean isMockProducer = false;
-    private static Properties producerProperties = null;
+    private boolean isProducerAlive = false;
+    private boolean isMockProducer = false;
+    private Properties producerProperties = null;
 
     /**
      * Producer private constructor for internal use
@@ -45,40 +41,15 @@ public final class Producer {
      * @param properties Properties needed for Producer
      * @param isMock     is this producer a mock one (Only for testing purposes, should be always false in production environment)
      */
-    private Producer(Properties properties, boolean isMock) {
-        producerProperties = properties;
+    public Producer(Properties properties, boolean isMock) {
+        this.producerProperties = properties;
         if (!isMock)
-            kafkaProducer = new KafkaProducer<>(properties);
+            this.kafkaProducer = new KafkaProducer<>(properties, new StringSerializer(), new StringSerializer());
         else {
-            kafkaProducer = new MockProducer<>(true, new StringSerializer(), new StringSerializer());
-            isMockProducer = true;
+            this.kafkaProducer = new MockProducer<>(true, new StringSerializer(), new StringSerializer());
+            this.isMockProducer = true;
         }
-        isProducerAlive = true;
-    }
-
-    /**
-     * static access method to retrieve the alive Producer instance. This is the main method to access the Producer instance.
-     * If you already initiated a mock producer and want a new producer, simply close and create a new one.
-     *
-     * @param properties Properties needed for Producer
-     * @return Producer already alive or newly created singleton instance of Producer
-     */
-    public static Producer producer(Properties properties) {
-        return producer(properties, false);
-    }
-
-    /**
-     * static access method to retrieve the alive Producer instance. Added to allow creation of a mock producer for testing purposes.
-     *
-     * @param properties Properties needed for Producer
-     * @param isMock     is this producer a mock one (Only for testing purposes, should be always false in production environment)
-     * @return already alive or newly created singleton instance of Producer
-     */
-    public static Producer producer(Properties properties, boolean isMock) {
-        if (!isProducerAlive && producer == null && kafkaProducer == null) {
-            producer = new Producer(properties, isMock);
-        }
-        return producer;
+        this.isProducerAlive = true;
     }
 
     /**
@@ -106,7 +77,7 @@ public final class Producer {
      *
      * @return boolean
      */
-    public static boolean isMockProducer() {
+    public boolean isMockProducer() {
         return isMockProducer;
     }
 
@@ -115,7 +86,7 @@ public final class Producer {
      *
      * @return boolean
      */
-    public static boolean isProducerAlive() {
+    public boolean isProducerAlive() {
         return isProducerAlive;
     }
 
@@ -208,20 +179,35 @@ public final class Producer {
      * @param afterCall AfterCall interface which user can implement to allow API to invoke after the call of a method is complete.
      * @return Response containing offset, partition info if produce was successful else list of error strings.
      */
-    private Response produce(String topic, Integer partition, String key, Payload payload, AfterCall afterCall) {
+    private Response produce(final String topic, Integer partition, String key, final Payload payload, final AfterCall afterCall) {
         final Response response = new Response();
         try {
             if (topic == null || topic.length() == 0)
                 throw new InvalidPayloadException("Topic cannot be null or empty");
             validateInput(payload);
-            final Future<RecordMetadata> future = kafkaProducer.send(new ProducerRecord<>(topic, partition, key, OBJECT_MAPPER.writeValueAsString(payload)), (metadata, exception) -> {
-                if (afterCall != null)
-                    afterCall.after(topic, metadata.partition(), metadata.offset(), exception, payload, producerProperties);
+            final Future<RecordMetadata> future = kafkaProducer.send(new ProducerRecord<>(topic, partition, key, OBJECT_MAPPER.writeValueAsString(payload)), new Callback() {
+                @Override
+                public void onCompletion(RecordMetadata metadata, Exception exception) {
+                    if (afterCall != null)
+                        afterCall.after(topic, metadata.partition(), metadata.offset(), exception, payload, producerProperties);
+                }
             });
             RecordMetadata recordMetadata = future.get(100, TimeUnit.MILLISECONDS);
             response.setOffset(recordMetadata.offset());
             response.setPartition(recordMetadata.partition());
-        } catch (IOException | InterruptedException | ExecutionException | TimeoutException | InvalidPayloadException e) {
+        } catch (IOException e) {
+            logger.error("Error while producing record to kafka for topic: " + topic + " with payload: " + payload, e);
+            response.addError(e.getLocalizedMessage());
+        } catch (InterruptedException e) {
+            logger.error("Error while producing record to kafka for topic: " + topic + " with payload: " + payload, e);
+            response.addError(e.getLocalizedMessage());
+        } catch (ExecutionException e) {
+            logger.error("Error while producing record to kafka for topic: " + topic + " with payload: " + payload, e);
+            response.addError(e.getLocalizedMessage());
+        } catch (TimeoutException e) {
+            logger.error("Error while producing record to kafka for topic: " + topic + " with payload: " + payload, e);
+            response.addError(e.getLocalizedMessage());
+        } catch (InvalidPayloadException e) {
             logger.error("Error while producing record to kafka for topic: " + topic + " with payload: " + payload, e);
             response.addError(e.getLocalizedMessage());
         }
@@ -259,7 +245,7 @@ public final class Producer {
      */
     public List<PartitionInfo> partitionInfo(String topic) throws IOException {
         List<PartitionInfo> partitionInfoList = null;
-        if (kafkaProducer != null && producer != null)
+        if (kafkaProducer != null)
             partitionInfoList = kafkaProducer.partitionsFor(topic);
         else
             throwIOException("Kafka Producer is not initialized or is closed. Please initialize the producer before invoking this method");
@@ -274,7 +260,7 @@ public final class Producer {
      */
     public String metrics() throws IOException {
         String metrics = null;
-        if (kafkaProducer != null && producer != null)
+        if (kafkaProducer != null)
             metrics = OBJECT_MAPPER.writeValueAsString(kafkaProducer.metrics());
         else
             throwIOException("Kafka Producer is not initialized or is closed. Please initialize the producer before invoking this method");
