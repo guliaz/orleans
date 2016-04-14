@@ -12,8 +12,6 @@ multipart:
   enabled: true
   maxFileSize: 10Mb
   maxRequestSize: 10Mb
-bootstrap:
-  servers: dimw-kafkabroker101.echostar.com:9092
 max:
   request:
     size: 100000
