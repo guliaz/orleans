@@ -3,6 +3,8 @@ server:
 spring:
   application:
     name: orleans
+bootstrap:
+  servers: localhost:9092
 app:
   user: admin
   password: admin
